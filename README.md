@@ -1,6 +1,7 @@
 --// CloudUI - Custom Roblox UI Library
 --// Rayfield-inspired layout, original implementation
---// Includes improved draggable bottom-right resize handle
+--// Includes reusable draggable bottom-right resize handle
+--// Includes loading screen
 --// Includes larger notifications
 --// Includes larger paragraph/label text
 --// No Lucide support
@@ -71,6 +72,8 @@ function CloudUI:CreateWindow(settings)
     local MinSize = settings.MinSize or Vector2.new(400, 300)
     local MaxSize = settings.MaxSize or Vector2.new(1000, 750)
 
+    local LoadingDuration = tonumber(settings.LoadingDuration) or 2
+
     local Gui = Create("ScreenGui", {
         Name = "CloudUI",
         ResetOnSpawn = false,
@@ -78,6 +81,108 @@ function CloudUI:CreateWindow(settings)
     })
 
     Gui.Parent = Player:WaitForChild("PlayerGui")
+
+    ------------------------------------------------------------
+    -- LOADING SCREEN
+    ------------------------------------------------------------
+
+    local Loading = Create("Frame", {
+        Parent = Gui,
+        Size = UDim2.fromScale(1, 1),
+        BackgroundColor3 = Theme.Background,
+        BorderSizePixel = 0,
+        ZIndex = 1000
+    })
+
+    local LoadingTitle = Create("TextLabel", {
+        Parent = Loading,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, -35),
+        Size = UDim2.fromOffset(400, 45),
+        BackgroundTransparency = 1,
+        Text = Title,
+        TextColor3 = Theme.Text,
+        TextSize = 28,
+        Font = Enum.Font.GothamBold,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 1001
+    })
+
+    local LoadingSubtitle = Create("TextLabel", {
+        Parent = Loading,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 5),
+        Size = UDim2.fromOffset(400, 25),
+        BackgroundTransparency = 1,
+        Text = "Loading CloudUI...",
+        TextColor3 = Theme.SubText,
+        TextSize = 14,
+        Font = Enum.Font.Gotham,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 1001
+    })
+
+    local LoadingBackground = Create("Frame", {
+        Parent = Loading,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 50),
+        Size = UDim2.fromOffset(280, 6),
+        BackgroundColor3 = Theme.Element,
+        BorderSizePixel = 0,
+        ZIndex = 1001
+    })
+
+    Corner(LoadingBackground, 5)
+
+    local LoadingBar = Create("Frame", {
+        Parent = LoadingBackground,
+        Size = UDim2.new(0, 0, 1, 0),
+        BackgroundColor3 = Theme.Accent,
+        BorderSizePixel = 0,
+        ZIndex = 1002
+    })
+
+    Corner(LoadingBar, 5)
+
+    Tween(LoadingBar, {
+        Size = UDim2.fromScale(1, 1)
+    }, LoadingDuration)
+
+    task.delay(LoadingDuration, function()
+        if not Loading or not Loading.Parent then
+            return
+        end
+
+        Tween(Loading, {
+            BackgroundTransparency = 1
+        }, 0.35)
+
+        Tween(LoadingTitle, {
+            TextTransparency = 1
+        }, 0.25)
+
+        Tween(LoadingSubtitle, {
+            TextTransparency = 1
+        }, 0.25)
+
+        Tween(LoadingBackground, {
+            BackgroundTransparency = 1
+        }, 0.25)
+
+        Tween(LoadingBar, {
+            BackgroundTransparency = 1
+        }, 0.25)
+
+        task.delay(0.4, function()
+            if Loading and Loading.Parent then
+                Loading:Destroy()
+            end
+        end)
+    end)
+
+    ------------------------------------------------------------
+    -- MAIN WINDOW
+    ------------------------------------------------------------
 
     local Main = Create("Frame", {
         Parent = Gui,
@@ -91,7 +196,8 @@ function CloudUI:CreateWindow(settings)
         BackgroundColor3 = Theme.Background,
         BorderSizePixel = 0,
         ClipsDescendants = false,
-        Active = true
+        Active = true,
+        ZIndex = 1
     })
 
     Corner(Main, 12)
@@ -498,12 +604,6 @@ function CloudUI:CreateWindow(settings)
             dragging = true
             dragStart = input.Position
             startPosition = Main.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
         end
     end)
 
@@ -527,15 +627,23 @@ function CloudUI:CreateWindow(settings)
         )
     end)
 
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            dragging = false
+        end
+    end)
+
     ------------------------------------------------------------
-    -- IMPROVED RESIZE HANDLE
+    -- REUSABLE RESIZE HANDLE
     ------------------------------------------------------------
 
     local ResizeHandle = Create("TextButton", {
         Parent = Main,
         AnchorPoint = Vector2.new(1, 1),
         Position = UDim2.new(1, -2, 1, -2),
-        Size = UDim2.fromOffset(32, 32),
+        Size = UDim2.fromOffset(36, 36),
         BackgroundTransparency = 1,
         Text = "",
         AutoButtonColor = false,
@@ -546,8 +654,8 @@ function CloudUI:CreateWindow(settings)
     local ResizeLine1 = Create("Frame", {
         Parent = ResizeHandle,
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 2, 0.5, 3),
-        Size = UDim2.fromOffset(3, 12),
+        Position = UDim2.new(0.5, 1, 0.5, 5),
+        Size = UDim2.fromOffset(3, 13),
         Rotation = 45,
         BackgroundColor3 = Theme.SubText,
         BorderSizePixel = 0,
@@ -557,8 +665,8 @@ function CloudUI:CreateWindow(settings)
     local ResizeLine2 = Create("Frame", {
         Parent = ResizeHandle,
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 5, 0.5, 0),
-        Size = UDim2.fromOffset(3, 18),
+        Position = UDim2.new(0.5, 5, 0.5, 1),
+        Size = UDim2.fromOffset(3, 20),
         Rotation = 45,
         BackgroundColor3 = Theme.SubText,
         BorderSizePixel = 0,
@@ -566,9 +674,8 @@ function CloudUI:CreateWindow(settings)
     })
 
     local resizing = false
-    local resizeInput = nil
-    local resizeStart = nil
-    local resizeStartSize = nil
+    local resizeStart
+    local resizeStartSize
 
     local function SetResizeVisual(active)
         local color = active and Theme.Text or Theme.SubText
@@ -597,7 +704,6 @@ function CloudUI:CreateWindow(settings)
             or input.UserInputType == Enum.UserInputType.Touch then
 
             resizing = true
-            resizeInput = input
             resizeStart = input.Position
             resizeStartSize = Main.AbsoluteSize
 
@@ -610,29 +716,29 @@ function CloudUI:CreateWindow(settings)
             return
         end
 
-        if input == resizeInput
-            or input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            local delta = input.Position - resizeStart
-
-            local newWidth = math.clamp(
-                resizeStartSize.X + delta.X,
-                MinSize.X,
-                MaxSize.X
-            )
-
-            local newHeight = math.clamp(
-                resizeStartSize.Y + delta.Y,
-                MinSize.Y,
-                MaxSize.Y
-            )
-
-            Main.Size = UDim2.fromOffset(
-                newWidth,
-                newHeight
-            )
+        if input.UserInputType ~= Enum.UserInputType.MouseMovement
+            and input.UserInputType ~= Enum.UserInputType.Touch then
+            return
         end
+
+        local delta = input.Position - resizeStart
+
+        local newWidth = math.clamp(
+            resizeStartSize.X + delta.X,
+            MinSize.X,
+            MaxSize.X
+        )
+
+        local newHeight = math.clamp(
+            resizeStartSize.Y + delta.Y,
+            MinSize.Y,
+            MaxSize.Y
+        )
+
+        Main.Size = UDim2.fromOffset(
+            newWidth,
+            newHeight
+        )
     end)
 
     UserInputService.InputEnded:Connect(function(input)
@@ -640,12 +746,10 @@ function CloudUI:CreateWindow(settings)
             return
         end
 
-        if input == resizeInput
-            or input.UserInputType == Enum.UserInputType.MouseButton1
+        if input.UserInputType == Enum.UserInputType.MouseButton1
             or input.UserInputType == Enum.UserInputType.Touch then
 
             resizing = false
-            resizeInput = nil
             SetResizeVisual(false)
         end
     end)
@@ -688,7 +792,7 @@ function CloudUI:CreateWindow(settings)
         local Duration = tonumber(settings.Duration) or 4
 
         local NotificationWidth = 360
-        local NotificationHeight = 100
+        local NotificationHeight = 110
 
         local Notification = Create("Frame", {
             Parent = Gui,
@@ -696,7 +800,7 @@ function CloudUI:CreateWindow(settings)
                 NotificationWidth,
                 NotificationHeight
             ),
-            Position = UDim2.new(1, 25, 1, -120),
+            Position = UDim2.new(1, 25, 1, -130),
             BackgroundColor3 = Theme.Secondary,
             BorderSizePixel = 0,
             ClipsDescendants = true,
@@ -733,12 +837,12 @@ function CloudUI:CreateWindow(settings)
 
         local ContentLabel = Create("TextLabel", {
             Parent = Notification,
-            Position = UDim2.fromOffset(20, 40),
-            Size = UDim2.new(1, -40, 0, 38),
+            Position = UDim2.fromOffset(20, 43),
+            Size = UDim2.new(1, -40, 0, 48),
             BackgroundTransparency = 1,
             Text = NotificationContent,
             TextColor3 = Theme.SubText,
-            TextSize = 13,
+            TextSize = 14,
             Font = Enum.Font.Gotham,
             TextWrapped = true,
             TextXAlignment = Enum.TextXAlignment.Left,
@@ -802,7 +906,7 @@ function CloudUI:CreateWindow(settings)
                     1,
                     25,
                     1,
-                    -120
+                    -130
                 )
             }, 0.25)
 
@@ -820,7 +924,7 @@ function CloudUI:CreateWindow(settings)
                 1,
                 -(NotificationWidth + 15),
                 1,
-                -120
+                -130
             )
         }, 0.35)
 
