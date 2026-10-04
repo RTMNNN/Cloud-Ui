@@ -1,6 +1,8 @@
 --// CloudUI - Custom Roblox UI Library
 --// Rayfield-inspired layout, original implementation
---// Includes draggable bottom-right resize handle
+--// Includes improved draggable bottom-right resize handle
+--// Includes larger notifications
+--// Includes larger paragraph/label text
 --// No Lucide support
 --// No emojis inside code
 
@@ -88,7 +90,8 @@ function CloudUI:CreateWindow(settings)
         ),
         BackgroundColor3 = Theme.Background,
         BorderSizePixel = 0,
-        ClipsDescendants = false
+        ClipsDescendants = false,
+        Active = true
     })
 
     Corner(Main, 12)
@@ -101,7 +104,9 @@ function CloudUI:CreateWindow(settings)
     local Top = Create("Frame", {
         Parent = Main,
         Size = UDim2.new(1, 0, 0, 55),
-        BackgroundTransparency = 1
+        BackgroundTransparency = 1,
+        Active = true,
+        ZIndex = 5
     })
 
     Create("TextLabel", {
@@ -113,7 +118,8 @@ function CloudUI:CreateWindow(settings)
         TextColor3 = Theme.Text,
         TextSize = 20,
         Font = Enum.Font.GothamBold,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 6
     })
 
     Create("TextLabel", {
@@ -125,7 +131,8 @@ function CloudUI:CreateWindow(settings)
         TextColor3 = Theme.SubText,
         TextSize = 11,
         Font = Enum.Font.Gotham,
-        TextXAlignment = Enum.TextXAlignment.Left
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 6
     })
 
     local Minimize = Create("TextButton", {
@@ -137,7 +144,8 @@ function CloudUI:CreateWindow(settings)
         TextColor3 = Theme.Text,
         TextSize = 18,
         Font = Enum.Font.GothamBold,
-        AutoButtonColor = false
+        AutoButtonColor = false,
+        ZIndex = 10
     })
 
     Corner(Minimize, 7)
@@ -151,7 +159,8 @@ function CloudUI:CreateWindow(settings)
         Position = UDim2.fromOffset(10, 65),
         Size = UDim2.new(0, 145, 1, -75),
         BackgroundColor3 = Theme.Secondary,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 2
     })
 
     Corner(Sidebar, 9)
@@ -164,7 +173,8 @@ function CloudUI:CreateWindow(settings)
         BorderSizePixel = 0,
         ScrollBarThickness = 2,
         ScrollBarImageColor3 = Theme.Accent,
-        CanvasSize = UDim2.new()
+        CanvasSize = UDim2.new(),
+        ZIndex = 3
     })
 
     Create("UIListLayout", {
@@ -181,7 +191,8 @@ function CloudUI:CreateWindow(settings)
         Parent = Main,
         Position = UDim2.fromOffset(165, 65),
         Size = UDim2.new(1, -175, 1, -75),
-        BackgroundTransparency = 1
+        BackgroundTransparency = 1,
+        ZIndex = 2
     })
 
     local Pages = {}
@@ -408,19 +419,20 @@ function CloudUI:CreateWindow(settings)
         end
 
         --------------------------------------------------------
-        -- LABEL
+        -- LABEL / PARAGRAPH
         --------------------------------------------------------
 
         function Tab:AddLabel(text)
             return Create("TextLabel", {
                 Parent = Page,
-                Size = UDim2.new(1, -8, 0, 30),
+                Size = UDim2.new(1, -8, 0, 34),
                 BackgroundTransparency = 1,
                 Text = text,
                 TextColor3 = Theme.SubText,
-                TextSize = 12,
+                TextSize = 14,
                 Font = Enum.Font.Gotham,
-                TextXAlignment = Enum.TextXAlignment.Left
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextYAlignment = Enum.TextYAlignment.Center
             })
         end
 
@@ -496,109 +508,7 @@ function CloudUI:CreateWindow(settings)
     end)
 
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and (
-            input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch
-        ) then
-
-            local delta = input.Position - dragStart
-
-            Main.Position = UDim2.new(
-                startPosition.X.Scale,
-                startPosition.X.Offset + delta.X,
-                startPosition.Y.Scale,
-                startPosition.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    ------------------------------------------------------------
-    -- RESIZE HANDLE
-    ------------------------------------------------------------
-
-    local ResizeHandle = Create("TextButton", {
-        Parent = Main,
-        AnchorPoint = Vector2.new(1, 1),
-        Position = UDim2.new(1, -5, 1, -5),
-        Size = UDim2.fromOffset(22, 22),
-        BackgroundTransparency = 1,
-        Text = "",
-        AutoButtonColor = false,
-        ZIndex = 20
-    })
-
-    local ResizeLine1 = Create("Frame", {
-        Parent = ResizeHandle,
-        Position = UDim2.fromOffset(7, 8),
-        Size = UDim2.fromOffset(2, 9),
-        Rotation = 45,
-        BackgroundColor3 = Theme.SubText,
-        BorderSizePixel = 0,
-        ZIndex = 21
-    })
-
-    local ResizeLine2 = Create("Frame", {
-        Parent = ResizeHandle,
-        Position = UDim2.fromOffset(12, 5),
-        Size = UDim2.fromOffset(2, 14),
-        Rotation = 45,
-        BackgroundColor3 = Theme.SubText,
-        BorderSizePixel = 0,
-        ZIndex = 21
-    })
-
-    local resizing = false
-    local resizeStart
-    local resizeStartSize
-
-    ResizeHandle.MouseEnter:Connect(function()
-        Tween(ResizeLine1, {
-            BackgroundColor3 = Theme.Text
-        }, 0.15)
-
-        Tween(ResizeLine2, {
-            BackgroundColor3 = Theme.Text
-        }, 0.15)
-    end)
-
-    ResizeHandle.MouseLeave:Connect(function()
-        if not resizing then
-            Tween(ResizeLine1, {
-                BackgroundColor3 = Theme.SubText
-            }, 0.15)
-
-            Tween(ResizeLine2, {
-                BackgroundColor3 = Theme.SubText
-            }, 0.15)
-        end
-    end)
-
-    ResizeHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            resizing = true
-            resizeStart = input.Position
-            resizeStartSize = Main.AbsoluteSize
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    resizing = false
-
-                    Tween(ResizeLine1, {
-                        BackgroundColor3 = Theme.SubText
-                    }, 0.15)
-
-                    Tween(ResizeLine2, {
-                        BackgroundColor3 = Theme.SubText
-                    }, 0.15)
-                end
-            end)
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if not resizing then
+        if not dragging then
             return
         end
 
@@ -607,24 +517,137 @@ function CloudUI:CreateWindow(settings)
             return
         end
 
-        local delta = input.Position - resizeStart
+        local delta = input.Position - dragStart
 
-        local newWidth = math.clamp(
-            resizeStartSize.X + delta.X,
-            MinSize.X,
-            MaxSize.X
+        Main.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
         )
+    end)
 
-        local newHeight = math.clamp(
-            resizeStartSize.Y + delta.Y,
-            MinSize.Y,
-            MaxSize.Y
-        )
+    ------------------------------------------------------------
+    -- IMPROVED RESIZE HANDLE
+    ------------------------------------------------------------
 
-        Main.Size = UDim2.fromOffset(
-            newWidth,
-            newHeight
-        )
+    local ResizeHandle = Create("TextButton", {
+        Parent = Main,
+        AnchorPoint = Vector2.new(1, 1),
+        Position = UDim2.new(1, -2, 1, -2),
+        Size = UDim2.fromOffset(32, 32),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        Active = true,
+        ZIndex = 50
+    })
+
+    local ResizeLine1 = Create("Frame", {
+        Parent = ResizeHandle,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 2, 0.5, 3),
+        Size = UDim2.fromOffset(3, 12),
+        Rotation = 45,
+        BackgroundColor3 = Theme.SubText,
+        BorderSizePixel = 0,
+        ZIndex = 51
+    })
+
+    local ResizeLine2 = Create("Frame", {
+        Parent = ResizeHandle,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 5, 0.5, 0),
+        Size = UDim2.fromOffset(3, 18),
+        Rotation = 45,
+        BackgroundColor3 = Theme.SubText,
+        BorderSizePixel = 0,
+        ZIndex = 51
+    })
+
+    local resizing = false
+    local resizeInput = nil
+    local resizeStart = nil
+    local resizeStartSize = nil
+
+    local function SetResizeVisual(active)
+        local color = active and Theme.Text or Theme.SubText
+
+        Tween(ResizeLine1, {
+            BackgroundColor3 = color
+        }, 0.15)
+
+        Tween(ResizeLine2, {
+            BackgroundColor3 = color
+        }, 0.15)
+    end
+
+    ResizeHandle.MouseEnter:Connect(function()
+        SetResizeVisual(true)
+    end)
+
+    ResizeHandle.MouseLeave:Connect(function()
+        if not resizing then
+            SetResizeVisual(false)
+        end
+    end)
+
+    ResizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            resizing = true
+            resizeInput = input
+            resizeStart = input.Position
+            resizeStartSize = Main.AbsoluteSize
+
+            SetResizeVisual(true)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if not resizing then
+            return
+        end
+
+        if input == resizeInput
+            or input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            local delta = input.Position - resizeStart
+
+            local newWidth = math.clamp(
+                resizeStartSize.X + delta.X,
+                MinSize.X,
+                MaxSize.X
+            )
+
+            local newHeight = math.clamp(
+                resizeStartSize.Y + delta.Y,
+                MinSize.Y,
+                MaxSize.Y
+            )
+
+            Main.Size = UDim2.fromOffset(
+                newWidth,
+                newHeight
+            )
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if not resizing then
+            return
+        end
+
+        if input == resizeInput
+            or input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
+
+            resizing = false
+            resizeInput = nil
+            SetResizeVisual(false)
+        end
     end)
 
     ------------------------------------------------------------
@@ -664,51 +687,58 @@ function CloudUI:CreateWindow(settings)
         local NotificationContent = settings.Content or ""
         local Duration = tonumber(settings.Duration) or 4
 
+        local NotificationWidth = 360
+        local NotificationHeight = 100
+
         local Notification = Create("Frame", {
             Parent = Gui,
-            Size = UDim2.fromOffset(320, 82),
-            Position = UDim2.new(1, 25, 1, -105),
+            Size = UDim2.fromOffset(
+                NotificationWidth,
+                NotificationHeight
+            ),
+            Position = UDim2.new(1, 25, 1, -120),
             BackgroundColor3 = Theme.Secondary,
             BorderSizePixel = 0,
             ClipsDescendants = true,
             ZIndex = 100
         })
 
-        Corner(Notification, 10)
+        Corner(Notification, 12)
         Stroke(Notification, Theme.Border, 1)
 
         local Accent = Create("Frame", {
             Parent = Notification,
-            Size = UDim2.fromOffset(4, 82),
+            Size = UDim2.fromOffset(5, NotificationHeight),
             Position = UDim2.fromOffset(0, 0),
             BackgroundColor3 = Theme.Accent,
             BorderSizePixel = 0,
             ZIndex = 101
         })
 
-        Corner(Accent, 4)
+        Corner(Accent, 5)
 
         local TitleLabel = Create("TextLabel", {
             Parent = Notification,
-            Position = UDim2.fromOffset(16, 10),
-            Size = UDim2.new(1, -50, 0, 22),
+            Position = UDim2.fromOffset(20, 12),
+            Size = UDim2.new(1, -65, 0, 25),
             BackgroundTransparency = 1,
             Text = NotificationTitle,
             TextColor3 = Theme.Text,
-            TextSize = 14,
+            TextSize = 16,
             Font = Enum.Font.GothamBold,
             TextXAlignment = Enum.TextXAlignment.Left,
+            TextYAlignment = Enum.TextYAlignment.Center,
             ZIndex = 101
         })
 
         local ContentLabel = Create("TextLabel", {
             Parent = Notification,
-            Position = UDim2.fromOffset(16, 33),
-            Size = UDim2.new(1, -30, 0, 30),
+            Position = UDim2.fromOffset(20, 40),
+            Size = UDim2.new(1, -40, 0, 38),
             BackgroundTransparency = 1,
             Text = NotificationContent,
             TextColor3 = Theme.SubText,
-            TextSize = 11,
+            TextSize = 13,
             Font = Enum.Font.Gotham,
             TextWrapped = true,
             TextXAlignment = Enum.TextXAlignment.Left,
@@ -718,12 +748,12 @@ function CloudUI:CreateWindow(settings)
 
         local Close = Create("TextButton", {
             Parent = Notification,
-            Position = UDim2.new(1, -30, 0, 7),
-            Size = UDim2.fromOffset(22, 22),
+            Position = UDim2.new(1, -38, 0, 9),
+            Size = UDim2.fromOffset(27, 27),
             BackgroundTransparency = 1,
             Text = "×",
             TextColor3 = Theme.SubText,
-            TextSize = 17,
+            TextSize = 20,
             Font = Enum.Font.GothamBold,
             AutoButtonColor = false,
             ZIndex = 102
@@ -743,8 +773,8 @@ function CloudUI:CreateWindow(settings)
 
         local ProgressBackground = Create("Frame", {
             Parent = Notification,
-            Position = UDim2.new(0, 0, 1, -3),
-            Size = UDim2.new(1, 0, 0, 3),
+            Position = UDim2.new(0, 0, 1, -4),
+            Size = UDim2.new(1, 0, 0, 4),
             BackgroundColor3 = Theme.Element,
             BorderSizePixel = 0,
             ZIndex = 101
@@ -768,7 +798,12 @@ function CloudUI:CreateWindow(settings)
             Closed = true
 
             Tween(Notification, {
-                Position = UDim2.new(1, 25, 1, -105)
+                Position = UDim2.new(
+                    1,
+                    25,
+                    1,
+                    -120
+                )
             }, 0.25)
 
             task.delay(0.3, function()
@@ -781,7 +816,12 @@ function CloudUI:CreateWindow(settings)
         Close.Activated:Connect(CloseNotification)
 
         Tween(Notification, {
-            Position = UDim2.new(1, -345, 1, -105)
+            Position = UDim2.new(
+                1,
+                -(NotificationWidth + 15),
+                1,
+                -120
+            )
         }, 0.35)
 
         Tween(Progress, {
